@@ -284,47 +284,28 @@ function animate() {
         projectiles.forEach((projectile, j) => {
 
             // Xử lý khi quái vật trúng đạn
-            if (!monster.particled &&
-                projectile.position.x + projectile.width >= monster.position.x &&
-                projectile.position.x <= monster.position.x + monster.width &&
-                projectile.position.y + projectile.height >= monster.position.y &&
-                projectile.position.y <= monster.position.y + monster.height &&
-                monster.spawn
-            ) {
+            if (!monster.particled && monster.spawn && isColliding(projectile, monster)) {
                 projectiles.splice(j, 1);
-                monster.image = monsterParticles
-                monster.particled = true
-
-
-                setTimeout(() => {
-                    monsters.splice(i, 1);
-                }, 500)
-                score += 100
-                scoreEl.innerHTML = score
+                monster.image = monsterParticles;
+                monster.particled = true;
+                setTimeout(() => monsters.splice(i, 1), 500);
+                score += 100;
+                scoreEl.innerHTML = score;
             }
         })
 
         // Khi người chơi chạm vào quái vật
-        if (player.position.x + player.width >= monster.position.x &&
-            player.position.x <= monster.position.x + monster.width &&
-            player.position.y + player.height >= monster.position.y &&
-            player.position.y <= monster.position.y + monster.height &&
-            monster.spawn) {
-            player.currentPlayerImage = playerDead
-            player.velocity = {
-                x: 0,
-                y: 0
-            }
-            game.over = true
-
-
+        if (monster.spawn && isColliding(player, monster)) {
+            player.currentPlayerImage = playerDead;
+            player.velocity = { x: 0, y: 0 };
+            game.over = true;
             setTimeout(() => {
-                monsters.splice(0, monsters.length)
-                projectiles.splice(0, projectiles.length)
-                gameover.classList.remove('hide-image')
-                gameover.classList.add('block-image')
-                game.active = false
-            }, 2000)
+                monsters = [];
+                projectiles = [];
+                gameover.classList.remove('hide-image');
+                gameover.classList.add('block-image');
+                game.active = false;
+            }, 2000);
         }
     });
 
@@ -469,125 +450,148 @@ addEventListener('keyup', ({ key }) => {
             keys.s.pressed = false
             break;
         case ' ':
-            if (keys.a.pressed && keys.w.pressed) {
-                projectilePosition = {
-                    x: player.position.x,
-                    y: player.position.y
-                };
-                projectileVelocity = {
-                    x: -Math.sqrt(SPEED_PROJECTILE),
-                    y: -Math.sqrt(SPEED_PROJECTILE)
-                };
-            } else if (keys.a.pressed && keys.s.pressed) {
-                projectilePosition = {
-                    x: player.position.x,
-                    y: player.position.y + player.height
-                };
-                projectileVelocity = {
-                    x: -Math.sqrt(SPEED_PROJECTILE),
-                    y: Math.sqrt(SPEED_PROJECTILE)
-                };
-            } else if (keys.d.pressed && keys.w.pressed) {
-                projectilePosition = {
-                    x: player.position.x + player.width,
-                    y: player.position.y
-                };
-                projectileVelocity = {
-                    x: Math.sqrt(SPEED_PROJECTILE),
-                    y: -Math.sqrt(SPEED_PROJECTILE)
-                };
-            } else if (keys.d.pressed && keys.s.pressed) {
-                projectilePosition = {
-                    x: player.position.x + player.width,
-                    y: player.position.y + player.height
-                };
-                projectileVelocity = {
-                    x: Math.sqrt(SPEED_PROJECTILE),
-                    y: Math.sqrt(SPEED_PROJECTILE)
-                };
-            } else if (keys.a.pressed) {
-                projectilePosition = {
-                    x: player.position.x,
-                    y: player.position.y + player.height / 2
-                };
-                projectileVelocity = {
-                    x: -SPEED_PROJECTILE,
-                    y: 0
-                };
-            } else if (keys.d.pressed) {
-                projectilePosition = {
-                    x: player.position.x + player.width,
-                    y: player.position.y + player.height / 2
-                };
-                projectileVelocity = {
-                    x: SPEED_PROJECTILE,
-                    y: 0
-                };
-            } else if (keys.w.pressed) {
-                projectilePosition = {
-                    x: player.position.x + player.width / 2,
-                    y: player.position.y
-                };
-                projectileVelocity = {
-                    x: 0,
-                    y: -SPEED_PROJECTILE
-                };
-            } else if (keys.s.pressed) {
-                projectilePosition = {
-                    x: player.position.x + player.width / 2,
-                    y: player.position.y + player.height
-                };
-                projectileVelocity = {
-                    x: 0,
-                    y: SPEED_PROJECTILE
-                };
-            } else {
-                // Nếu không có phím nào được nhấn, sử dụng hình ảnh hiện tại của nhân vật
-                if (player.currentPlayerImage === playerImages.back) {
-                    projectilePosition = {
-                        x: player.position.x + player.width / 2,
-                        y: player.position.y
-                    };
-                    projectileVelocity = {
-                        x: 0,
-                        y: -SPEED_PROJECTILE
-                    };
-                } else if (player.currentPlayerImage === playerImages.front) {
-                    projectilePosition = {
-                        x: player.position.x + player.width / 2,
-                        y: player.position.y + player.height
-                    };
-                    projectileVelocity = {
-                        x: 0,
-                        y: SPEED_PROJECTILE
-                    };
-                } else if (player.currentPlayerImage === playerImages.left) {
-                    projectilePosition = {
-                        x: player.position.x,
-                        y: player.position.y + player.height / 2
-                    };
-                    projectileVelocity = {
-                        x: -SPEED_PROJECTILE,
-                        y: 0
-                    };
-                } else if (player.currentPlayerImage === playerImages.right) {
-                    projectilePosition = {
-                        x: player.position.x + player.width,
-                        y: player.position.y + player.height / 2
-                    };
-                    projectileVelocity = {
-                        x: SPEED_PROJECTILE,
-                        y: 0
-                    };
-                }
-            }
-
-            fireProjectile()
-
+            handleProjectileShot()
             break;
     }
 })
 
+function handleProjectileShot() {
+    if (keys.a.pressed && keys.w.pressed) {
+        setDiagonalShot('up-left')
+    } else if (keys.a.pressed && keys.s.pressed) {
+        setDiagonalShot('down-left') 
+    } else if (keys.d.pressed && keys.w.pressed) {
+        setDiagonalShot('up-right')
+    } else if (keys.d.pressed && keys.s.pressed) {
+        setDiagonalShot('down-right')
+    } else if (keys.a.pressed) {
+        setStraightShot('left')
+    } else if (keys.d.pressed) {
+        setStraightShot('right') 
+    } else if (keys.w.pressed) {
+        setStraightShot('up')
+    } else if (keys.s.pressed) {
+        setStraightShot('down')
+    } else {
+        setDefaultDirectionShot()
+    }
+
+    fireProjectile()
+}
+
+function setDiagonalShot(direction) {
+    const sqrt = Math.sqrt(SPEED_PROJECTILE)
+    
+    switch(direction) {
+        case 'up-left':
+            projectilePosition = {
+                x: player.position.x,
+                y: player.position.y
+            }
+            projectileVelocity = {
+                x: -sqrt,
+                y: -sqrt
+            }
+            break;
+        case 'down-left':
+            projectilePosition = {
+                x: player.position.x,
+                y: player.position.y + player.height
+            }
+            projectileVelocity = {
+                x: -sqrt,
+                y: sqrt
+            }
+            break;
+        case 'up-right':
+            projectilePosition = {
+                x: player.position.x + player.width,
+                y: player.position.y
+            }
+            projectileVelocity = {
+                x: sqrt,
+                y: -sqrt
+            }
+            break;
+        case 'down-right':
+            projectilePosition = {
+                x: player.position.x + player.width,
+                y: player.position.y + player.height
+            }
+            projectileVelocity = {
+                x: sqrt,
+                y: sqrt
+            }
+            break;
+    }
+}
+
+function setStraightShot(direction) {
+    switch(direction) {
+        case 'left':
+            projectilePosition = {
+                x: player.position.x,
+                y: player.position.y + player.height / 2
+            }
+            projectileVelocity = {
+                x: -SPEED_PROJECTILE,
+                y: 0
+            }
+            break;
+        case 'right':
+            projectilePosition = {
+                x: player.position.x + player.width,
+                y: player.position.y + player.height / 2
+            }
+            projectileVelocity = {
+                x: SPEED_PROJECTILE,
+                y: 0
+            }
+            break;
+        case 'up':
+            projectilePosition = {
+                x: player.position.x + player.width / 2,
+                y: player.position.y
+            }
+            projectileVelocity = {
+                x: 0,
+                y: -SPEED_PROJECTILE
+            }
+            break;
+        case 'down':
+            projectilePosition = {
+                x: player.position.x + player.width / 2,
+                y: player.position.y + player.height
+            }
+            projectileVelocity = {
+                x: 0,
+                y: SPEED_PROJECTILE
+            }
+            break;
+    }
+}
+
+function setDefaultDirectionShot() {
+    if (player.currentPlayerImage === playerImages.back) {
+        setStraightShot('up')
+    } else if (player.currentPlayerImage === playerImages.front) {
+        setStraightShot('down')
+    } else if (player.currentPlayerImage === playerImages.left) {
+        setStraightShot('left')
+    } else if (player.currentPlayerImage === playerImages.right) {
+        setStraightShot('right')
+    }
+}
+
+// Hàm kiểm tra va chạm giữa hai hình chữ nhật
+function isColliding(rect1, rect2) {
+    return (
+        rect1.position.x < rect2.position.x + rect2.width &&
+        rect1.position.x + rect1.width > rect2.position.x &&
+        rect1.position.y < rect2.position.y + rect2.height &&
+        rect1.position.y + rect1.height > rect2.position.y
+    );
+}
 
 
 
